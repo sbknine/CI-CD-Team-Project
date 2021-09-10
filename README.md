@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 # ProShop eCommerce Platform
 
 > eCommerce platform built with the MERN stack & Redux.
@@ -126,6 +126,3 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 =======
-# CS360-SoftenProject
-ทำงานกันนะน้องๆ
->>>>>>> d0abc86bf6c321b38e5640b47791bf305942cebe
