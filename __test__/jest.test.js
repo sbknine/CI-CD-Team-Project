@@ -1,7 +1,7 @@
 import { request ,response } from 'express';
 const mockingoose = require('mockingoose');
 
-const {authUser , getUserProfile , getUserProfile, getUserById, registerUser} = require('../backend/controllers/userController');
+const {authUser , getUserProfile , getUserById, registerUser} = require('../backend/controllers/userController');
 const User = require('../backend/models/userModel')
 const users = require('../backend/data/users')
 
