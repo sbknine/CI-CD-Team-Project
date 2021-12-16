@@ -1,32 +1,68 @@
 import { request ,response } from 'express';
+import bcrypt from 'bcryptjs'
 const mockingoose = require('mockingoose');
 
-const {authUser , getUserProfile , getUserProfile, getUserById, registerUser} = require('../backend/controllers/userController');
+const {authUser , getUserProfile , getUserById, registerUser} = require('../backend/controllers/userController');
 const User = require('../backend/models/userModel')
 const users = require('../backend/data/users')
 
+const mongoose = require('mongoose')
+const databaseName = 'test'
+
+beforeAll(async () => {
+    const url = 'mongodb://127.0.0.1:27017'
+    await mongoose.connect(url, { useNewUrlParser: true })
+  })
+
 //N
-// describe("authUser", () =>{ 
+describe("authUser", () =>{ 
+    
+    const mrequest = {
+        user :{
+            _id:'61b9bb954bbb9f2cb82d0300'
+        }
+    }
 
-//     const mrequest = {
-//         user :{
-//             _id : '61b9bb954bbb9f2cb82d0301'
-//         }
-//     }
+    it("shoud", async () => {
+        mockingoose(User).toReturn([
+            {
+                isAdmin: true,
+                _id: '61b9bb954bbb9f2cb82d0300',
+                name: 'Admin User',
+                email: 'admin@example.com'
+            }
+        ], 'findOne');
+        const result = await getUserProfile(mrequest);
+        console.log(result);
+    })
 
-//     it("shoud", async () => {
-//         mockingoose(User).toReturn([
-//             {
-//                 _id: '61b9bb954bbb9f2cb82d0300',
-//                 name: 'Admin User',
-//                 email: 'admin@example.com',
-//                 isAdmin: 'true',
-//             }
-//         ], 'find');
-//         const result = await getUserProfile(users,response);
-//         console.log(result);
-//     })
-// })
+    // it('shold find', () =>{
+    //     mockingoose.User.toReturn([
+    //         {
+    //             isAdmin: true,
+    //             _id: '61b9bb954bbb9f2cb82d0300',
+    //             name: 'Admin User',
+    //             email: 'admin@example.com'
+    //         }
+    //     ])
+
+    //     return User
+    //     .find()
+    //     .where('name')
+    //     .in([0])
+    //     .then(result => {
+    //         expect(result).toEqual([
+    //             {
+    //               isAdmin: true,
+    //               _id: '61b9bb954bbb9f2cb82d0300',
+    //               name: 'Admin User',
+    //               email: 'admin@example.com'
+    //             }
+    //           ])
+    //     })
+    // })
+
+})
 
 
 //T
