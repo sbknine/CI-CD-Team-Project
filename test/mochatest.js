@@ -146,17 +146,17 @@ describe("userController Test", () => {
     })*/
 })
 describe("productController Test", () => {
-    it("should get product by id" , async () => {
-        const fixture = {
-            id : "61bb1d9caf32be36cc1220eb"
-        }
-        chai.request(server)
-            .get('/api/products/' + fixture.id)
-            .send(fixture.id)
-            .end((fox, res) => {
-                res.body.should.have.property('name').eql("Airpods Wireless Bluetooth Headphones")
-            })
-    })
+    // it("should get product by id" , async () => {
+    //     const fixture = {
+    //         id : "61bcab636003d55f0cde8308"
+    //     }
+    //     chai.request(server)
+    //         .get('/api/products/' + fixture.id)
+    //         .send(fixture.id)
+    //         .end((fox, res) => {
+    //             res.body.should.have.property('name').eql("Airpods Wireless Bluetooth Headphones")
+    //         })
+    // })
     it("should get product in page 1", async () => {       
         chai.request(server)
             .get('/api/products')
