@@ -59,8 +59,4 @@ app.listen(
   )
 )
 
-<<<<<<< HEAD
 export default app
-=======
-export default app
->>>>>>> 975b59fd0bea21de104cb179c4050f81b4af72a2
