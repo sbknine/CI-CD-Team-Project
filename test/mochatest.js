@@ -1,14 +1,15 @@
-import {expect} from "chai"
+//import {expect} from "chai"
 import sinon  from "sinon"
 import User from '../backend/models/userModel.js'
 import Product from '../backend/models/productModel.js'
 import Order from '../backend/models/orderModel.js'
 
-//import chai, { expect } from "chai"
-//import chaiHttp from "chai-http"
-//import server from "../backend/server.js"
-//let should = chai.should()
-//chai.use(chaiHttp)
+import config from '../backend/config/db.js'
+import chai, { expect } from "chai"
+import chaiHttp from "chai-http"
+import server from "../backend/server.js"
+let should = chai.should()
+chai.use(chaiHttp)
 /*describe("Check Api", () => {
     it("should return api status 200 ok", (done) => {
         chai.request(server)
@@ -133,7 +134,8 @@ import Order from '../backend/models/orderModel.js'
             })
     })  
 })*/
-describe("User Controller Test", () => {
+
+/*describe("User Controller Test", () => {
     it("should register user" , async () => {
         //given
         const fixture = {             
@@ -323,6 +325,157 @@ describe("Order Controller Test", () => {
         let stub = sinon.stub(Order, "find").returns(fixture)
         let result = await Order.find(fixture)        
         expect(result.length).to.eq(2)
+        stub.restore()
+    })
+})*/
+
+describe("User Controller Test", () => {    
+    it("should login as Admin", (done) => {
+        const givenRequest = {            
+            email : "admin@example.com",
+            password : "123456"
+        }
+
+        const mockResponseFromMongo = new User({
+            _id: "61b9bb954bbb9f2cb82d0300", 
+            email: "admin@example.com", 
+            isAdmin: true, 
+            name: "Admin User",
+            password: "$2a$10$ASIJeoWGuU6GwD6KtjV7deqrHrRku4hGQFYR5qj.Pdb6sRJ2N7qra"
+        })
+        let stub = sinon.stub(User, "findOne").returns(mockResponseFromMongo)
+
+        chai.request(server)
+            .post('/api/users/login')
+            .send(givenRequest)
+            .end((err, res) => {                               
+                res.body.should.have.property('name').eql("Admin User");  
+                done();                 
+            })
+        stub.restore();     
+    })
+    /*it("should get user profile", (done) => {
+        const givenRequest = {
+            email : "admin@exampl.com",
+            password : "123456"
+        }
+
+        const mockResponseFromMongo = new User({
+            _id: "61b9bb954bbb9f2cb82d0300", 
+            email: "admin@example.com", 
+            isAdmin: true, 
+            name: "Admin User",
+            password: "$2a$10$ASIJeoWGuU6GwD6KtjV7deqrHrRku4hGQFYR5qj.Pdb6sRJ2N7qra"
+        })
+        let stub = sinon.stub(User, "findById").returns(mockResponseFromMongo)
+
+        chai.request(server)
+            .get('/api/users/profile')
+            .set('Authorization', `Bearer ${config.ADMIN_TOKEN}`)
+            .send(givenRequest)
+            .end((err, res) => {
+                console.log(res.body)
+                done()
+            })
+        stub.restore()
+    })*/
+    it("should returen user already exists" , (done) => {            
+        const givenRequest = {
+            name: "Admin User",
+            email : "admin@example.com",
+            password : "123456"
+        }
+
+        const mockResponseFromMongo = new User({
+            _id: "61b9bb954bbb9f2cb82d0300", 
+            email: "admin@example.com", 
+            isAdmin: true, 
+            name: "Admin User",
+            password: "$2a$10$ASIJeoWGuU6GwD6KtjV7deqrHrRku4hGQFYR5qj.Pdb6sRJ2N7qra"
+        })
+        let stub = sinon.stub(User, "findOne").returns(mockResponseFromMongo)
+
+        chai.request(server)
+            .post('/api/users')
+            .send(givenRequest)
+            .end((err, res) => {                                
+                res.should.have.status(400)
+                done()            
+            })
+        stub.restore()
+    })    
+})
+describe("Product Controller Test", () => {
+    it("should get all product", (done) => {
+        const mockResponseFromMongo = new Product({
+            _id: "61bcab4119c31a4bc4d6d3d5", 
+            rating : 0,
+            numReviews: 0,
+            countInStock : 0,
+            price : 929.99,
+            name : "Cannon EOS 80D DSLR Camera",
+            image : "/images/camera.jpg",
+            description : "Characterized by versatile imaging specs, the Canon EOS 80D further clarifies itself using a pair of robust focusing systems and an intuitive design",
+            brand : "Cannon",
+            category : "Electronics"
+        })
+        let stub = sinon.stub(Product, "find").returns(mockResponseFromMongo)
+
+        chai.request(server)
+            .get('/api/products')
+            .end((err, res) => {               
+                res.body.should.have.property('page').eql(1)
+                done()
+            })
+        stub.restore()
+    })
+    it("should get all product", (done) => {
+        const mockResponseFromMongo = new Product([
+            {
+            _id: "61bcab4119c31a4bc4d6d3d5", 
+            rating : 0,
+            numReviews: 0,
+            price : 929.99,
+            countInStock : 0,
+            name : "Cannon EOS 80D DSLR Camera",
+            image : "/images/camera.jpg",
+            description : "Characterized by versatile imaging specs, the Canon EOS 80D further clarifies itself using a pair of robust focusing systems and an intuitive design",
+            brand : "Cannon",
+            category : "Electronics"
+            },
+            {
+                _id: "61bcab4119c31a4bc4d6d3d3", 
+                rating : 0,
+                numReviews: 0,
+                price : 89.99,
+                countInStock : 3,
+                name : "Airpods Wireless Bluetooth Headphones",
+                image : "/images/airpods.jpg",
+                description : "Bluetooth technology lets you connect it with compatible devices wirelessly High-quality AAC audio offers immersive listening experience Built-in microphone allows you to take calls while working",
+                brand : "Apple",
+                category : "Electronics"
+            },
+            {
+                _id: "61bcab4119c31a4bc4d6d3d4", 
+                rating : 0,
+                numReviews: 0,
+                price : 599.99,
+                countInStock : 10,
+                name : "iPhone 11 Pro 256GB Memory",
+                image : "/images/phone.jpg",
+                description : "Introducing the iPhone 11 Pro. A transformative triple-camera system that adds tons of capability without complexity. An unprecedented leap in battery life",
+                brand : "Apple",
+                category : "Electronics"
+            }
+        ])
+        let stub = sinon.stub(Product, "find").returns(mockResponseFromMongo)
+
+        chai.request(server)
+            .get('/api/products/top')
+            .end((err, res) => {               
+                res.body.should.be.a('array')
+                done()
+            })
         stub.restore()
     })
 })
