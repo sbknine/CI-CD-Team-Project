@@ -26,12 +26,11 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
-    - name: npm install for backend
-      working-directory: ./backend
-      run: npm ci
+    - name: npm install
+      run: npm i
     - name: npm install for frontend
       working-directory: ./frontend
-      run: npm ci
+      run: npm i
     - name: Data import to mongoDB
       run: nmp run data:import
       
