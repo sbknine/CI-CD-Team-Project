@@ -348,11 +348,12 @@ describe("User Controller Test", () => {
         chai.request(server)
             .post('/api/users/login')
             .send(givenRequest)
-            .end((err, res) => {                               
-                res.body.should.have.property('email').eql("admin@example.com");  
+            .end((err, res) => {                                               
+                res.body.should.have.property('email').eql("admin@example.com");
+                stub.restore();  
                 done();                 
             })
-        stub.restore();     
+             
     })
     it("should get user profile", (done) => {
         const givenRequest = {
@@ -367,17 +368,21 @@ describe("User Controller Test", () => {
             name: "John Doe",
             password: "$2a$10$5F6QxpHUacGhqdyxekH0wOCumsROVzTgkmoHY42c7.Vi/TupFg.RO"
         })
-        let stub = sinon.stub(User, "findById").returns(mockResponseFromMongo)
+        let stub = sinon.stub(User, "findById")
+        .onFirstCall().returns({
+            select: sinon.stub().returns(mockResponseFromMongo)
+        })
+        .onSecondCall().returns(mockResponseFromMongo);
 
         chai.request(server)
             .get('/api/users/profile')
             .set('Authorization', `Bearer ${"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYxYmNhYjQxMTljMzFhNGJjNGQ2ZDNkMCIsImlhdCI6MTYzOTgyODY3NSwiZXhwIjoxNjQyNDIwNjc1fQ.AfXBIpusZa9w0Lo7ZT4CDLma4-7Km93J_MlC8WIPKTk"}`)
             .send(givenRequest)
-            .end((err1, res1) => {                    
-                res1.body.should.have.property('name').eql("John Doe")
+            .end((err, res) => {                                    
+                res.body.should.have.property('name').eql("John Doe")
+                stub.restore()
                 done(); 
             })
-        stub.restore()
     })
     it("should returen user already exists" , (done) => {            
         const givenRequest = {
@@ -399,9 +404,9 @@ describe("User Controller Test", () => {
             .send(givenRequest)
             .end((err, res) => {                                
                 res.should.have.status(400)
+                stub.restore()
                 done()            
-            })
-        stub.restore()
+            })        
     })
     it("should get user profile by id", (done) => {
         const givenRequest = {
@@ -410,25 +415,32 @@ describe("User Controller Test", () => {
         }
 
         const mockResponseFromMongo = new User({
-            _id: "61bcab4119c31a4bc4d6d3d0", 
-            email: "john@example.com", 
-            isAdmin: false, 
-            name: "John Doe",
-            password: "$2a$10$5F6QxpHUacGhqdyxekH0wOCumsROVzTgkmoHY42c7.Vi/TupFg.RO"
+            _id: "61b9bb954bbb9f2cb82d0300", 
+            email: "admin@example.com", 
+            isAdmin: true, 
+            name: "Admin User",
+            password: "$2a$10$ASIJeoWGuU6GwD6KtjV7deqrHrRku4hGQFYR5qj.Pdb6sRJ2N7qra"
         })
-        let stub = sinon.stub(User, "findById").returns(mockResponseFromMongo)
+        let stub = sinon.stub(User, "findById")
+        .onFirstCall().returns({
+            select: sinon.stub().returns(mockResponseFromMongo)
+        })
+        .onSecondCall().returns({
+            select: sinon.stub().returns(mockResponseFromMongo)
+        })      
+        .onThirdCall().returns(mockResponseFromMongo)
 
         chai.request(server)
             .get('/api/users/' + mockResponseFromMongo._id)
-            .set('Authorization', `Bearer ${"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYxYmNhYjQxMTljMzFhNGJjNGQ2ZDNjZiIsImlhdCI6MTYzOTgyNDMyNiwiZXhwIjoxNjQyNDE2MzI2fQ.Prrb2A4XGFg3X5RHqPvLuWMLAEdzelSTwEJYj3Z4zhw"}`)
+            .set('Authorization', `Bearer ${"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYxYmRmZjVlYWRjZDNhNDU2ODgyZWY4OCIsImlhdCI6MTYzOTg0MjM3NSwiZXhwIjoxNjQyNDM0Mzc1fQ.ZuNbOTSdMUjg2A2NHMbHPtYjYgjO4rN4V8KJieGzSxU"}`)
             .send(givenRequest)
-            .end((err, res) => {                
-                res.body.should.have.property('name').eql("John Doe")
+            .end((err, res) => {                              
+                res.body.should.have.property('name').eql("Admin User")
+                stub.restore()                                
                 done()
-            })
-        stub.restore() 
+            })      
     })
-    it("should get all users", (done) => {
+    /*it("should get all users", (done) => {
         const givenRequest = {
             email : "admin@example.com",
             password : "123456"
@@ -457,44 +469,59 @@ describe("User Controller Test", () => {
                 password: "$2a$10$zSLMMFZ68WmqEazAGf2YD.0qZ00DUMYEq4NlmEpFHG4DOMB4SLOhq"
             }
         )
-        let stub = sinon.stub(User, "find").returns(mockResponseFromMongo)
+        let stub = sinon.stub(User, "find")
+        .onFirstCall().returns({
+            select: sinon.stub().returns(mockResponseFromMongo)
+        })
+        .onSecondCall().returns({
+            select: sinon.stub().returns(mockResponseFromMongo)
+        })
+        .onThirdCall().returns(mockResponseFromMongo)
 
         chai.request(server)
             .get('/api/users')
-            .set('Authorization', `Bearer ${"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYxYmNhYjQxMTljMzFhNGJjNGQ2ZDNjZiIsImlhdCI6MTYzOTgyNDMyNiwiZXhwIjoxNjQyNDE2MzI2fQ.Prrb2A4XGFg3X5RHqPvLuWMLAEdzelSTwEJYj3Z4zhw"}`)
+            .set('Authorization', `Bearer ${"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYxYmRmZjVlYWRjZDNhNDU2ODgyZWY4OCIsImlhdCI6MTYzOTg0MjM3NSwiZXhwIjoxNjQyNDM0Mzc1fQ.ZuNbOTSdMUjg2A2NHMbHPtYjYgjO4rN4V8KJieGzSxU"}`)
             .send(givenRequest)
             .end((err, res) => {
+                console.log(res)
                 res.body.should.be.a('array')
-                done()
-            })
-        stub.restore() 
-    })
-    it("should update user profile", (done) => {
-        const givenRequest = {            
-            email : "jane1@example.com",
-            password : "123456"
+                stub.restore() 
+                done() 
+            })     
+    })*/
+    /*it("should update user profile", (done) => {
+        const givenRequest = {   
+            name : "Jane Doe",
+            email : "jane@example.com",
+            password : "123456"    
         }
 
         const mockResponseFromMongo = new User(
             {
-                _id: "61bcab4119c31a4bc4d6d3d1", 
+                _id: "61bdff5eadcd3a456882ef8a", 
                 email: "jane@example.com", 
                 isAdmin: false, 
                 name: "Jane Doe",
                 password: "$2a$10$zSLMMFZ68WmqEazAGf2YD.0qZ00DUMYEq4NlmEpFHG4DOMB4SLOhq"
             }
         )
-        let stub = sinon.stub(User, "findById").returns(mockResponseFromMongo)
+        let stub = sinon.stub(User, "findById")
+        .onFirstCall().returns({
+            select: sinon.stub().returns(mockResponseFromMongo)
+        })
+        .onSecondCall().returns(mockResponseFromMongo)
+                
 
         chai.request(server)
             .put('/api/users/profile')
             .set('Authorization', `Bearer ${"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYxYmNhYjQxMTljMzFhNGJjNGQ2ZDNkMSIsImlhdCI6MTYzOTgzMjM4MywiZXhwIjoxNjQyNDI0MzgzfQ.evTKJQ5bBAGE2NJtIATkzRvHoirH1BtcQt-Rigq0ras"}`)
             .send(givenRequest)
-            .end((err, res) => {                
-                res.body.should.have.property('email').eql("jane1@example.com")
+            .end((err, res) => {
+                console.log(res.body)                
+                res.body.should.have.property('name').eql("Jane1 Doe")
+                stub.restore()                
                 done()
-            })
-        stub.restore()
+            })    
     })
     it("should update admin profile", (done) => {
         const givenRequest = {   
@@ -513,7 +540,11 @@ describe("User Controller Test", () => {
                 password: "$2a$10$IQGzJ5hBbyR5l3GWeZWcr.O7XDt0xtRhlz20IhBf10PuRfxRfsKOe"
             }
         )
-        let stub = sinon.stub(User, "findById").returns(mockResponseFromMongo)
+        let stub = sinon.stub(User, "findById")
+        .onFirstCall().returns({
+            select: sinon.stub().returns(mockResponseFromMongo)
+        })
+        .onSecondCall().returns(mockResponseFromMongo);
 
         chai.request(server)
             .put('/api/users/profile')
@@ -521,13 +552,14 @@ describe("User Controller Test", () => {
             .send(givenRequest)
             .end((err, res) => {                               
                 res.body.should.have.property('name').eql("Admin1 User1")
+                stub.restore()
                 done()
             })
-        stub.restore()
-    })        
+        
+    })*/        
 })
 describe("Product Controller Test", () => {
-    it("should get all product", (done) => {
+    /*it("should get all product", (done) => {
         const mockResponseFromMongo = new Product({
             _id: "61bcab4119c31a4bc4d6d3d5", 
             rating : 0,
@@ -544,11 +576,12 @@ describe("Product Controller Test", () => {
 
         chai.request(server)
             .get('/api/products')
-            .end((err, res) => {               
+            .end((err, res) => {
+                console.log(res.body)               
                 res.body.should.have.property('page').eql(1)
-                done()
-            })
-        stub.restore()
+                stub.restore()
+                done()                
+            })    
     })
     it("should get top 3 product", (done) => {
         const mockResponseFromMongo = new Product([
@@ -598,7 +631,34 @@ describe("Product Controller Test", () => {
                 done()
             })
         stub.restore()
-    })
+    })*/
+    it("should get product by id", (done) => {
+        const givenRequest = {
+            name : "iPhone 11 Pro 256GB Memory"
+        }
+        const mockResponseFromMongo = new Product({
+            _id: "61bcab4119c31a4bc4d6d3d4", 
+            rating : 0,
+            numReviews: 0,
+            price : 599.99,
+            countInStock : 10,
+            name : "iPhone 11 Pro 256GB Memory",
+            image : "/images/phone.jpg",
+            description : "Introducing the iPhone 11 Pro. A transformative triple-camera system that adds tons of capability without complexity. An unprecedented leap in battery life",
+            brand : "Apple",
+            category : "Electronics"
+        })
+        let stub = sinon.stub(Product, "findById").returns(mockResponseFromMongo)
+
+        chai.request(server)
+            .get("/api/products/" + mockResponseFromMongo._id)
+            .send(givenRequest)
+            .end((err, res) => {
+                res.body.should.have.property('_id').eql("61bcab4119c31a4bc4d6d3d4")                
+                stub.restore()
+                done()
+            })
+    })    
 })
 describe("Order Controller Test", () => {
     it("should return status 404 (Order not found)", (done) => {
@@ -620,8 +680,8 @@ describe("Order Controller Test", () => {
             .send(givenRequest)
             .end((err, res) => {
                 res.body.should.have.property('message').eql('Order not found')
+                stub.restore() 
                 done()
-            })
-        stub.restore()  
+            })         
     })  
 })
