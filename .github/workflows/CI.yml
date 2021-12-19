@@ -32,7 +32,7 @@ jobs:
       working-directory: ./frontend
       run: npm i
     - name: Data import to mongoDB
-      run: nmp run data:import
+      run: npm run data:import
       
     #- run: npm run build --if-present
     - run: npm test
