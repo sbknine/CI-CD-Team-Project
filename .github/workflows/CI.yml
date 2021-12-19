@@ -43,9 +43,9 @@ jobs:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
         
-    #- name: Build and push to DockerHub
-    #  if: success()
-    # uses: docker/build-push-action@v2
-    #  with:
-    #    push: true
-    #    tags: sbknine/cs360_final-project:latest
+    - name: Build and push to DockerHub
+      if: success()
+      uses: docker/build-push-action@v2
+      with:
+        push: true
+        tags: sbknine/cs360_final-project:latest
