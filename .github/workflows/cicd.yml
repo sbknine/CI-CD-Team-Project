@@ -51,9 +51,12 @@ jobs:
         tags: sbknine/cs360_final-project:latest
 
   Continuos_Deployment:
-    needs: [Continuos_Integration:]
-
+    needs: [Continuos_Integration]
+    
     runs-on: ubuntu-lastest
+    steps:
+    - uses: actions/checkout@v2
+
     - name: Configure AWS credentials
       if: success()
       
