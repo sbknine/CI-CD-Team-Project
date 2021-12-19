@@ -52,7 +52,7 @@ jobs:
 
   Continuos_Deployment:
     needs: [Continuos_Integration]
-    
+    if: ${{ always() && contains(needs.*.result, 'success') && !(contains(needs.*.result, 'failure')) }}
     runs-on: ubuntu-lastest
     steps:
     - uses: actions/checkout@v2
