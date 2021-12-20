@@ -5,8 +5,7 @@ RUN npm install
 WORKDIR /app/frontend
 RUN npm install
 WORKDIR /app
-EXPOSE 8080
+COPY docker.env /app/.env
 ADD start.sh /app
-ENV MONGO_URI = mongodb://172.17.0.1:27017
 RUN chmod +x /app/start.sh
 CMD [ "./start.sh" ]
