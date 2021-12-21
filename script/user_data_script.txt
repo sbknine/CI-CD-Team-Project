@@ -1,18 +1,40 @@
 #!/bin/bash
+
 sudo yum -y update
+
+sudo amazon-linux-extras install epel -y
+
+sudo yum -y --enablerepo=epel install nodejs npm
 
 sudo amazon-linux-extras install docker -y
 
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash
+
+. ~/.nvm/nvm.sh
+
+nvm install node
+
+sudo yum install git -y
+
+git clone https://github.com/sbknine/CS360_TeamProject
+
 cd /etc/yum.repos.d/
-echo "[mongodb-org-5.0]
-name=MongoDB Repository
-baseurl=https://repo.mongodb.org/yum/amazon/2/mongodb-org/5.0/x86_64/
-gpgcheck=1
-enabled=1
-gpgkey=https://www.mongodb.org/static/pgp/server-5.0.asc" >> mongodb-org-5.0.repo
+echo $'[mongodb-org-5.0]\nname=MongoDB Repository\nbaseurl=https://repo.mongodb.org/yum/amazon/2/mongodb-org/5.0/x86_64/\ngpgcheck=1\nenabled=1\ngpgkey=https://www.mongodb.org/static/pgp/server-5.0.asc' | sudo tee mongodb-org-5.0.repo 
 cd /home/ec2-user/
+
 sudo yum install -y mongodb-org
 sudo systemctl start mongod
+
+cd CS360_TeamProject/
+sudo rm -rf package-lock.json
+npm install
+cd frontend/
+sudo rm -rf package-lock.json
+npm install
+
+cd ..
+
+npm run data:import
 
 sudo service docker start
 
