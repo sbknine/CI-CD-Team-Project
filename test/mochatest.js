@@ -4,11 +4,9 @@ import User from '../backend/models/userModel.js'
 import Product from '../backend/models/productModel.js'
 import Order from '../backend/models/orderModel.js'
 
-import config from '../backend/config/db.js'
-import chai, { expect } from "chai"
+import chai from "chai"
 import chaiHttp from "chai-http"
 import server from "../backend/server.js"
-import { getUsers } from "../backend/controllers/userController.js"
 let should = chai.should()
 chai.use(chaiHttp)
 
@@ -29,6 +27,222 @@ describe("Check Api", () => {
             done()                                   
             })
     })
+})
+describe("User Controller Test", () => {    
+    it("should login as Admin", (done) => {
+        const givenRequest = {            
+            email : "admin@example.com",
+            password : "123456"
+        }
+
+        const mockResponseFromMongo = new User({
+            _id: "61b9bb954bbb9f2cb82d0300", 
+            email: "admin@example.com", 
+            isAdmin: true, 
+            name: "Admin User",
+            password: "$2a$10$ASIJeoWGuU6GwD6KtjV7deqrHrRku4hGQFYR5qj.Pdb6sRJ2N7qra"
+        })
+        let stub = sinon.stub(User, "findOne").returns(mockResponseFromMongo)
+
+        chai.request(server)
+            .post('/api/users/login')
+            .send(givenRequest)
+            .end((err, res) => {                                                               
+                res.body.should.have.property('email').eql("admin@example.com");
+                stub.restore();  
+                done();                 
+            })
+             
+    })
+    it("should get user profile", (done) => {
+        const givenRequest = {
+            email : "john@example.com",
+            password : "123456"
+        }
+
+        const mockResponseFromMongo = new User({
+            _id: "61bcab4119c31a4bc4d6d3d0", 
+            email: "john@example.com", 
+            isAdmin: false, 
+            name: "John Doe",
+            password: "$2a$10$5F6QxpHUacGhqdyxekH0wOCumsROVzTgkmoHY42c7.Vi/TupFg.RO"
+        })
+        let stub = sinon.stub(User, "findById")
+        .onFirstCall().returns({
+            select: sinon.stub().returns(mockResponseFromMongo)
+        })
+        .onSecondCall().returns(mockResponseFromMongo);
+
+        chai.request(server)
+            .get('/api/users/profile')
+            .set('Authorization', `Bearer ${"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYxYmNhYjQxMTljMzFhNGJjNGQ2ZDNkMCIsImlhdCI6MTYzOTgyODY3NSwiZXhwIjoxNjQyNDIwNjc1fQ.AfXBIpusZa9w0Lo7ZT4CDLma4-7Km93J_MlC8WIPKTk"}`)
+            .send(givenRequest)
+            .end((err, res) => {                                    
+                res.body.should.have.property('name').eql("John Doe")
+                stub.restore()
+                done(); 
+            })
+    })
+    it("should return user already exists" , (done) => {            
+        const givenRequest = {
+            email : "admin@example.com",
+            password : "123456"
+        }
+
+        const mockResponseFromMongo = new User({
+            _id: "61b9bb954bbb9f2cb82d0300", 
+            email: "admin@example.com", 
+            isAdmin: true, 
+            name: "Admin User",
+            password: "$2a$10$ASIJeoWGuU6GwD6KtjV7deqrHrRku4hGQFYR5qj.Pdb6sRJ2N7qra"
+        })
+        let stub = sinon.stub(User, "findOne").returns(mockResponseFromMongo)
+
+        chai.request(server)
+            .post('/api/users')
+            .send(givenRequest)
+            .end((err, res) => {                                
+                res.should.have.status(400)
+                stub.restore()
+                done()            
+            })        
+    })
+    it("should get user profile by id", (done) => {
+        const givenRequest = {
+            email : "admin@example.com",
+            password : "123456"
+        }
+
+        const mockResponseFromMongo = new User({
+            _id: "61b9bb954bbb9f2cb82d0300", 
+            email: "admin@example.com", 
+            isAdmin: true, 
+            name: "Admin User",
+            password: "$2a$10$ASIJeoWGuU6GwD6KtjV7deqrHrRku4hGQFYR5qj.Pdb6sRJ2N7qra"
+        })
+        let stub = sinon.stub(User, "findById")
+        .onFirstCall().returns({
+            select: sinon.stub().returns(mockResponseFromMongo)
+        })
+        .onSecondCall().returns({
+            select: sinon.stub().returns(mockResponseFromMongo)
+        })      
+        .onThirdCall().returns(mockResponseFromMongo)
+
+        chai.request(server)
+            .get('/api/users/' + mockResponseFromMongo._id)
+            .set('Authorization', `Bearer ${"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYxYmRmZjVlYWRjZDNhNDU2ODgyZWY4OCIsImlhdCI6MTYzOTg0MjM3NSwiZXhwIjoxNjQyNDM0Mzc1fQ.ZuNbOTSdMUjg2A2NHMbHPtYjYgjO4rN4V8KJieGzSxU"}`)
+            .send(givenRequest)
+            .end((err, res) => {                              
+                res.body.should.have.property('name').eql("Admin User")
+                stub.restore()                                
+                done()
+            })      
+    })
+})
+describe("Product Controller Test", () => {    
+    it("should get product by id", (done) => {
+        const givenRequest = {
+            name : "iPhone 11 Pro 256GB Memory"
+        }
+        const mockResponseFromMongo = new Product({
+            _id: "61bcab4119c31a4bc4d6d3d4", 
+            rating : 0,
+            numReviews: 0,
+            price : 599.99,
+            countInStock : 10,
+            name : "iPhone 11 Pro 256GB Memory",
+            image : "/images/phone.jpg",
+            description : "Introducing the iPhone 11 Pro. A transformative triple-camera system that adds tons of capability without complexity. An unprecedented leap in battery life",
+            brand : "Apple",
+            category : "Electronics"
+        })
+        let stub = sinon.stub(Product, "findById").returns(mockResponseFromMongo)
+
+        chai.request(server)
+            .get("/api/products/" + mockResponseFromMongo._id)
+            .send(givenRequest)
+            .end((err, res) => {
+                res.body.should.have.property('_id').eql("61bcab4119c31a4bc4d6d3d4")                
+                stub.restore()
+                done()
+            })
+    })
+    it("should get product in page 1", async () => {
+        const mockResponseFromMongo = new Product({
+            countDocument : 1
+        })
+        let stub = sinon.stub(Product , "countDocuments").returns(mockResponseFromMongo)       
+        chai.request(server)
+            .get('/api/products')
+            .send("1")
+            .end((err, res) => {                                
+                res.body.should.have.property('page').eql(1)
+                stub.restore()
+            })
+    })
+    it("should return top 3 products", async () => {
+        chai.request(server)
+            .get('/api/products/top')
+            .end((err, res) => {
+                res.body.should.be.a('array')                
+            })
+    })
+})
+describe("Order Controller Test", () => {    
+    it("should get my orders", (done) => {
+        const mockRes = new User ({
+            isAdmin: true,
+            _id: "61be119af2a34b28e0cdc5b4",
+            name: 'Admin User',
+            email: 'admin@example.com',
+            password: '$2a$10$RmTMhPBt.frry2GBwjH70eYwES9QbCkMcjUGYGTWKbBN5etf/qPvu'
+        })
+        const givenRequest = {
+            email : "admin@example.com",
+            password : "123456"
+        }
+        const mockResponseFromMongo = new Order({
+            user : {
+                _id: "61b9bb954bbb9f2cb82d0300", 
+                email: "admin@example.com", 
+                isAdmin: true, 
+                name: "Admin User",
+                password: "$2a$10$ASIJeoWGuU6GwD6KtjV7deqrHrRku4hGQFYR5qj.Pdb6sRJ2N7qra"
+            },
+            orderItems : {
+                name : null,
+                qty : null,
+                image : null,
+                price : null,                
+            }
+        })
+        let stub = sinon.stub(User, "findById")
+        .onFirstCall().returns({
+            select : sinon.stub().returns(mockRes)
+        })
+        .onSecondCall().returns(mockRes) 
+        chai.request(server)
+            .get('/api/users/profile')            
+            .send(givenRequest)
+            .end((err1,res1) => {                       
+                let stub1 = sinon.stub(Order, "find")
+                .onFirstCall().returns({
+                    user : sinon.stub().returns(mockResponseFromMongo._id)
+                })
+                .onSecondCall().returns(mockResponseFromMongo)
+                chai.request(server)
+                    .get('/api/orders/myorders')
+                    .set('Authorization', `Bearer ${"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYxYmRmZjVlYWRjZDNhNDU2ODgyZWY4OCIsImlhdCI6MTYzOTg0MjM3NSwiZXhwIjoxNjQyNDM0Mzc1fQ.ZuNbOTSdMUjg2A2NHMbHPtYjYgjO4rN4V8KJieGzSxU"}`)
+                    .send(givenRequest)
+                    .end((err, res) => {                        
+                        res.should.have.status(200)                            
+                        stub1.restore()
+                        stub.restore()
+                        done()
+                    })
+            })        
+    })  
 })
 /*describe("userController Test", () => {    
     it("should login as Admin", async () => {
@@ -104,6 +318,62 @@ describe("Check Api", () => {
             .end((fox, res) => {
                 console.log(res.body.property('name'))
             })
+    })
+    /*it("should get all users", (done) => {
+        const givenRequest = {
+            name : "Admin User",
+            isAdmin: true,         
+            email : "admin@example.com",
+            password : "123456"
+        }
+
+        const mockResponseFromMongo = new User([
+            {
+                isAdmin: true,
+                _id: "61be119af2a34b28e0cdc5b4",
+                name: 'Admin User',
+                email: 'admin@example.com',
+                password: '$2a$10$RmTMhPBt.frry2GBwjH70eYwES9QbCkMcjUGYGTWKbBN5etf/qPvu',
+            },
+            {
+                isAdmin: false,
+                _id: "61be119af2a34b28e0cdc5b5",
+                name: 'John Doe',
+                email: 'john@example.com',
+                password: '$2a$10$wH02iFuRooZ0w9LtaTBmNOwJR8Q36Zf/Nc3DS1tbZdsi9YrtuZKje',
+            },
+            {
+                isAdmin: false,
+                _id: "61be119af2a34b28e0cdc5b6",
+                name: 'Jane Doe',
+                email: 'jane@example.com',
+                password: '$2a$10$JRLXh9FUBnI0HdPVF4LHXOBcYmpDTaNSIUjNeXEEWNy2f7ArlIqlq',
+            }
+        ])
+        sinon.stub(User, 'find').returns(mockResponseFromMongo);
+        console.log(User.find())
+        //expect(User.find()).to.have.length(3)
+        /*let stub = sinon.stub(User, "find").callsFake(() => {
+            return{}
+        })
+        /*.onFirstCall().returns({
+            select: sinon.stub().returns(mockResponseFromMongo)
+        })
+        .onSecondCall().returns({
+            select: sinon.stub().returns(mockResponseFromMongo)
+        })
+        .onThirdCall().returns(mockResponseFromMongo)*/
+
+        /*chai.request(server)
+            .get('/api/users')
+            .set('Authorization', `Bearer ${"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYxYmRmZjVlYWRjZDNhNDU2ODgyZWY4OCIsImlhdCI6MTYzOTg0MjM3NSwiZXhwIjoxNjQyNDM0Mzc1fQ.ZuNbOTSdMUjg2A2NHMbHPtYjYgjO4rN4V8KJieGzSxU"}`)
+            .send(givenRequest)
+            .end((err, res) => {
+                console.log(res.body)
+                //res.body.should.be.a('array')
+                stub.restore() 
+                done() 
+            })    
     })    
 })*/
 /*describe("productController Test", () => {
@@ -208,280 +478,6 @@ describe("Check Api", () => {
     })
 })
 describe("Product Controller Test", () => {
-    it("should get product by id" , async () => {
-        const fixture = {
-            _id : "61bb1d9caf32be36cc1220eb"
-        }
-        let stub = sinon.stub(Product, "findById").returns(fixture)
-        let result = await Product.findById(fixture._id)
-        expect(result._id).to.eq(fixture._id)
-        stub.restore()
-    })    
-    it("should return top 3 products", async () => {
-        const fixture = [
-            {
-                _id: "61bcab4119c31a4bc4d6d3d3",              
-                name: "Airpods Wireless Bluetooth Headphones",
-                price : 89.99,
-                brand : "Apple"
-            },
-            {
-                _id: "61bcab4119c31a4bc4d6d3d4",              
-                name: "iPhone 11 Pro 256GB Memory",
-                price : 599.99,
-                brand : "Apple"
-            },
-            {
-                _id: "61bcab4119c31a4bc4d6d3d5",              
-                name: "Cannon EOS 80D DSLR Camera",
-                price : 929.99,
-                brand : "Cannon"
-            }
-        ]
-        let stub = sinon.stub(Product, "find").returns(fixture)
-        let result = await Product.find(fixture)              
-        expect(result.length).to.eq(3)
-        stub.restore()
-    })  
-})
-describe("Order Controller Test", () => {
-    it("should return order by id", async () => {
-        const fixture = {
-            _id: "61bcca2c474f874ee8870062",
-            taxPrice: 13.5,
-            shippingPrice : 100,
-            totalPrice : 203.49,
-            user : "61bcab4119c31a4bc4d6d3d0",
-            paymentMethod : "PayPal"
-        }
-        let stub = sinon.stub(Order, "findById").returns(fixture._id)
-        let result = await Order.findById(fixture._id)
-        expect(result).to.eq(fixture._id)        
-        stub.restore()
-    })
-    it("should update order", async () => {
-        const fixture1 = {
-            _id: "61bcca2c474f874ee8870062",
-            taxPrice: 13.5,
-            shippingPrice : 100,
-            totalPrice : 203.49,
-            user : "61bcab4119c31a4bc4d6d3d0",
-            paymentMethod : "PayPal"
-        }
-        const fixture2 = {
-            _id: "61bccd15d9f1bc0b6c692724",
-            taxPrice : 60,
-            shippingPrice : 0,
-            totalPrice : 459.99,            
-            user : "61bcab4119c31a4bc4d6d3d0",
-            paymentMethod : "PayPal"
-        }
-        let stub = sinon.stub(Order, "findById").returns(fixture1)
-        fixture1._id = fixture2._id
-        fixture1.taxPrice = fixture2.taxPrice
-        fixture1.shippingPrice = fixture2.shippingPrice
-        fixture1.totalPrice = fixture2.totalPrice
-        fixture1.user = fixture2.user
-        fixture1.paymentMethod = fixture2.paymentMethod
-        let result = await Order.findById(fixture1)        
-        expect(result._id).to.eq(fixture2._id)        
-        stub.restore()
-    })
-    it("should get all order", async () => {
-        const fixture = [
-            {
-                _id: "61bcca2c474f874ee8870062",
-                taxPrice: 13.5,
-                shippingPrice : 100,
-                totalPrice : 203.49,
-                user : "61bcab4119c31a4bc4d6d3d0",
-                paymentMethod : "PayPal"
-            },
-            {
-                _id: "61bccd15d9f1bc0b6c692724",
-                taxPrice : 60,
-                shippingPrice : 0,
-                totalPrice : 459.99,            
-                user : "61bcab4119c31a4bc4d6d3d0",
-                paymentMethod : "PayPal"
-            }
-        ]
-        let stub = sinon.stub(Order, "find").returns(fixture)
-        let result = await Order.find(fixture)        
-        expect(result.length).to.eq(2)
-        stub.restore()
-    })
-})*/
-
-describe("User Controller Test", () => {    
-    it("should login as Admin", (done) => {
-        const givenRequest = {            
-            email : "admin@example.com",
-            password : "123456"
-        }
-
-        const mockResponseFromMongo = new User({
-            _id: "61b9bb954bbb9f2cb82d0300", 
-            email: "admin@example.com", 
-            isAdmin: true, 
-            name: "Admin User",
-            password: "$2a$10$ASIJeoWGuU6GwD6KtjV7deqrHrRku4hGQFYR5qj.Pdb6sRJ2N7qra"
-        })
-        let stub = sinon.stub(User, "findOne").returns(mockResponseFromMongo)
-
-        chai.request(server)
-            .post('/api/users/login')
-            .send(givenRequest)
-            .end((err, res) => {                                               
-                res.body.should.have.property('email').eql("admin@example.com");
-                stub.restore();  
-                done();                 
-            })
-             
-    })
-    it("should get user profile", (done) => {
-        const givenRequest = {
-            email : "john@example.com",
-            password : "123456"
-        }
-
-        const mockResponseFromMongo = new User({
-            _id: "61bcab4119c31a4bc4d6d3d0", 
-            email: "john@example.com", 
-            isAdmin: false, 
-            name: "John Doe",
-            password: "$2a$10$5F6QxpHUacGhqdyxekH0wOCumsROVzTgkmoHY42c7.Vi/TupFg.RO"
-        })
-        let stub = sinon.stub(User, "findById")
-        .onFirstCall().returns({
-            select: sinon.stub().returns(mockResponseFromMongo)
-        })
-        .onSecondCall().returns(mockResponseFromMongo);
-
-        chai.request(server)
-            .get('/api/users/profile')
-            .set('Authorization', `Bearer ${"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYxYmNhYjQxMTljMzFhNGJjNGQ2ZDNkMCIsImlhdCI6MTYzOTgyODY3NSwiZXhwIjoxNjQyNDIwNjc1fQ.AfXBIpusZa9w0Lo7ZT4CDLma4-7Km93J_MlC8WIPKTk"}`)
-            .send(givenRequest)
-            .end((err, res) => {                                    
-                res.body.should.have.property('name').eql("John Doe")
-                stub.restore()
-                done(); 
-            })
-    })
-    it("should return user already exists" , (done) => {            
-        const givenRequest = {
-            email : "admin@example.com",
-            password : "123456"
-        }
-
-        const mockResponseFromMongo = new User({
-            _id: "61b9bb954bbb9f2cb82d0300", 
-            email: "admin@example.com", 
-            isAdmin: true, 
-            name: "Admin User",
-            password: "$2a$10$ASIJeoWGuU6GwD6KtjV7deqrHrRku4hGQFYR5qj.Pdb6sRJ2N7qra"
-        })
-        let stub = sinon.stub(User, "findOne").returns(mockResponseFromMongo)
-
-        chai.request(server)
-            .post('/api/users')
-            .send(givenRequest)
-            .end((err, res) => {                                
-                res.should.have.status(400)
-                stub.restore()
-                done()            
-            })        
-    })
-    it("should get user profile by id", (done) => {
-        const givenRequest = {
-            email : "admin@example.com",
-            password : "123456"
-        }
-
-        const mockResponseFromMongo = new User({
-            _id: "61b9bb954bbb9f2cb82d0300", 
-            email: "admin@example.com", 
-            isAdmin: true, 
-            name: "Admin User",
-            password: "$2a$10$ASIJeoWGuU6GwD6KtjV7deqrHrRku4hGQFYR5qj.Pdb6sRJ2N7qra"
-        })
-        let stub = sinon.stub(User, "findById")
-        .onFirstCall().returns({
-            select: sinon.stub().returns(mockResponseFromMongo)
-        })
-        .onSecondCall().returns({
-            select: sinon.stub().returns(mockResponseFromMongo)
-        })      
-        .onThirdCall().returns(mockResponseFromMongo)
-
-        chai.request(server)
-            .get('/api/users/' + mockResponseFromMongo._id)
-            .set('Authorization', `Bearer ${"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYxYmRmZjVlYWRjZDNhNDU2ODgyZWY4OCIsImlhdCI6MTYzOTg0MjM3NSwiZXhwIjoxNjQyNDM0Mzc1fQ.ZuNbOTSdMUjg2A2NHMbHPtYjYgjO4rN4V8KJieGzSxU"}`)
-            .send(givenRequest)
-            .end((err, res) => {                              
-                res.body.should.have.property('name').eql("Admin User")
-                stub.restore()                                
-                done()
-            })      
-    })
-    /*it("should get all users", (done) => {
-        const givenRequest = {
-            name : "Admin User",
-            isAdmin: true,         
-            email : "admin@example.com",
-            password : "123456"
-        }
-
-        const mockResponseFromMongo = new User([
-            {
-                isAdmin: true,
-                _id: "61be119af2a34b28e0cdc5b4",
-                name: 'Admin User',
-                email: 'admin@example.com',
-                password: '$2a$10$RmTMhPBt.frry2GBwjH70eYwES9QbCkMcjUGYGTWKbBN5etf/qPvu',
-            },
-            {
-                isAdmin: false,
-                _id: "61be119af2a34b28e0cdc5b5",
-                name: 'John Doe',
-                email: 'john@example.com',
-                password: '$2a$10$wH02iFuRooZ0w9LtaTBmNOwJR8Q36Zf/Nc3DS1tbZdsi9YrtuZKje',
-            },
-            {
-                isAdmin: false,
-                _id: "61be119af2a34b28e0cdc5b6",
-                name: 'Jane Doe',
-                email: 'jane@example.com',
-                password: '$2a$10$JRLXh9FUBnI0HdPVF4LHXOBcYmpDTaNSIUjNeXEEWNy2f7ArlIqlq',
-            }
-        ])
-        sinon.stub(User, 'find').returns(mockResponseFromMongo);
-        console.log(User.find())
-        //expect(User.find()).to.have.length(3)
-        /*let stub = sinon.stub(User, "find").callsFake(() => {
-            return{}
-        })
-        /*.onFirstCall().returns({
-            select: sinon.stub().returns(mockResponseFromMongo)
-        })
-        .onSecondCall().returns({
-            select: sinon.stub().returns(mockResponseFromMongo)
-        })
-        .onThirdCall().returns(mockResponseFromMongo)*/
-
-        /*chai.request(server)
-            .get('/api/users')
-            .set('Authorization', `Bearer ${"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYxYmRmZjVlYWRjZDNhNDU2ODgyZWY4OCIsImlhdCI6MTYzOTg0MjM3NSwiZXhwIjoxNjQyNDM0Mzc1fQ.ZuNbOTSdMUjg2A2NHMbHPtYjYgjO4rN4V8KJieGzSxU"}`)
-            .send(givenRequest)
-            .end((err, res) => {
-                console.log(res.body)
-                //res.body.should.be.a('array')
-                stub.restore() 
-                done() 
-            })    
-    })*/              
-})
-describe("Product Controller Test", () => {
     /*it("should get all product", (done) => {
         const mockResponseFromMongo = new Product({
             _id: "61bcab4119c31a4bc4d6d3d5", 
@@ -554,53 +550,41 @@ describe("Product Controller Test", () => {
                 done()
             })
         stub.restore()
-    })*/
-    it("should get product by id", (done) => {
-        const givenRequest = {
-            name : "iPhone 11 Pro 256GB Memory"
+    })
+    it("should get product by id" , async () => {
+        const fixture = {
+            _id : "61bb1d9caf32be36cc1220eb"
         }
-        const mockResponseFromMongo = new Product({
-            _id: "61bcab4119c31a4bc4d6d3d4", 
-            rating : 0,
-            numReviews: 0,
-            price : 599.99,
-            countInStock : 10,
-            name : "iPhone 11 Pro 256GB Memory",
-            image : "/images/phone.jpg",
-            description : "Introducing the iPhone 11 Pro. A transformative triple-camera system that adds tons of capability without complexity. An unprecedented leap in battery life",
-            brand : "Apple",
-            category : "Electronics"
-        })
-        let stub = sinon.stub(Product, "findById").returns(mockResponseFromMongo)
-
-        chai.request(server)
-            .get("/api/products/" + mockResponseFromMongo._id)
-            .send(givenRequest)
-            .end((err, res) => {
-                res.body.should.have.property('_id').eql("61bcab4119c31a4bc4d6d3d4")                
-                stub.restore()
-                done()
-            })
-    })
-    it("should get product in page 1", async () => {
-        const mockResponseFromMongo = new Product({
-            countDocument : 1
-        })
-        let stub = sinon.stub(Product , "countDocuments").returns(mockResponseFromMongo)       
-        chai.request(server)
-            .get('/api/products')
-            .send("1")
-            .end((err, res) => {     
-                res.body.should.have.property('page').eql(1)
-                stub.restore()
-            })
-    })
+        let stub = sinon.stub(Product, "findById").returns(fixture)
+        let result = await Product.findById(fixture._id)
+        expect(result._id).to.eq(fixture._id)
+        stub.restore()
+    })    
     it("should return top 3 products", async () => {
-        chai.request(server)
-            .get('/api/products/top')
-            .end((err, res) => {
-                res.body.should.be.a('array')                
-            })
+        const fixture = [
+            {
+                _id: "61bcab4119c31a4bc4d6d3d3",              
+                name: "Airpods Wireless Bluetooth Headphones",
+                price : 89.99,
+                brand : "Apple"
+            },
+            {
+                _id: "61bcab4119c31a4bc4d6d3d4",              
+                name: "iPhone 11 Pro 256GB Memory",
+                price : 599.99,
+                brand : "Apple"
+            },
+            {
+                _id: "61bcab4119c31a4bc4d6d3d5",              
+                name: "Cannon EOS 80D DSLR Camera",
+                price : 929.99,
+                brand : "Cannon"
+            }
+        ]
+        let stub = sinon.stub(Product, "find").returns(fixture)
+        let result = await Product.find(fixture)              
+        expect(result.length).to.eq(3)
+        stub.restore()
     })
     /*it("should create product", (done) => {
         const givenRequest = {
@@ -641,9 +625,75 @@ describe("Product Controller Test", () => {
                 stub.restore()
                 done()
             })
-    })*/       
+    })  
 })
 describe("Order Controller Test", () => {
+    it("should return order by id", async () => {
+        const fixture = {
+            _id: "61bcca2c474f874ee8870062",
+            taxPrice: 13.5,
+            shippingPrice : 100,
+            totalPrice : 203.49,
+            user : "61bcab4119c31a4bc4d6d3d0",
+            paymentMethod : "PayPal"
+        }
+        let stub = sinon.stub(Order, "findById").returns(fixture._id)
+        let result = await Order.findById(fixture._id)
+        expect(result).to.eq(fixture._id)        
+        stub.restore()
+    })
+    it("should update order", async () => {
+        const fixture1 = {
+            _id: "61bcca2c474f874ee8870062",
+            taxPrice: 13.5,
+            shippingPrice : 100,
+            totalPrice : 203.49,
+            user : "61bcab4119c31a4bc4d6d3d0",
+            paymentMethod : "PayPal"
+        }
+        const fixture2 = {
+            _id: "61bccd15d9f1bc0b6c692724",
+            taxPrice : 60,
+            shippingPrice : 0,
+            totalPrice : 459.99,            
+            user : "61bcab4119c31a4bc4d6d3d0",
+            paymentMethod : "PayPal"
+        }
+        let stub = sinon.stub(Order, "findById").returns(fixture1)
+        fixture1._id = fixture2._id
+        fixture1.taxPrice = fixture2.taxPrice
+        fixture1.shippingPrice = fixture2.shippingPrice
+        fixture1.totalPrice = fixture2.totalPrice
+        fixture1.user = fixture2.user
+        fixture1.paymentMethod = fixture2.paymentMethod
+        let result = await Order.findById(fixture1)        
+        expect(result._id).to.eq(fixture2._id)        
+        stub.restore()
+    })
+    it("should get all order", async () => {
+        const fixture = [
+            {
+                _id: "61bcca2c474f874ee8870062",
+                taxPrice: 13.5,
+                shippingPrice : 100,
+                totalPrice : 203.49,
+                user : "61bcab4119c31a4bc4d6d3d0",
+                paymentMethod : "PayPal"
+            },
+            {
+                _id: "61bccd15d9f1bc0b6c692724",
+                taxPrice : 60,
+                shippingPrice : 0,
+                totalPrice : 459.99,            
+                user : "61bcab4119c31a4bc4d6d3d0",
+                paymentMethod : "PayPal"
+            }
+        ]
+        let stub = sinon.stub(Order, "find").returns(fixture)
+        let result = await Order.find(fixture)        
+        expect(result.length).to.eq(2)
+        stub.restore()
+    })
     /*it("should return status 404 (Order not found)", (done) => {               
         const givenRequest = {
             email : "john@example.com",
@@ -676,59 +726,5 @@ describe("Order Controller Test", () => {
                         done()    
                     })
             })                            
-    })*/
-    it("should get my orders", (done) => {
-        const mockRes = new User ({
-            isAdmin: true,
-            _id: "61be119af2a34b28e0cdc5b4",
-            name: 'Admin User',
-            email: 'admin@example.com',
-            password: '$2a$10$RmTMhPBt.frry2GBwjH70eYwES9QbCkMcjUGYGTWKbBN5etf/qPvu'
-        })
-        const givenRequest = {
-            email : "admin@example.com",
-            password : "123456"
-        }
-        const mockResponseFromMongo = new Order({
-            user : {
-                _id: "61b9bb954bbb9f2cb82d0300", 
-                email: "admin@example.com", 
-                isAdmin: true, 
-                name: "Admin User",
-                password: "$2a$10$ASIJeoWGuU6GwD6KtjV7deqrHrRku4hGQFYR5qj.Pdb6sRJ2N7qra"
-            },
-            orderItems : {
-                name : null,
-                qty : null,
-                image : null,
-                price : null,                
-            }
-        })
-        let stub = sinon.stub(User, "findById")
-        .onFirstCall().returns({
-            select : sinon.stub().returns(mockRes)
-        })
-        .onSecondCall().returns(mockRes) 
-        chai.request(server)
-            .get('/api/users/profile')
-            //.set('Authorization', `Bearer ${"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYxYmRmZjVlYWRjZDNhNDU2ODgyZWY4OCIsImlhdCI6MTYzOTg0MjM3NSwiZXhwIjoxNjQyNDM0Mzc1fQ.ZuNbOTSdMUjg2A2NHMbHPtYjYgjO4rN4V8KJieGzSxU"}`)
-            .send(givenRequest)
-            .end((err1,res1) => {                       
-                let stub1 = sinon.stub(Order, "find")
-                .onFirstCall().returns({
-                    user : sinon.stub().returns(mockResponseFromMongo._id)
-                })
-                .onSecondCall().returns(mockResponseFromMongo)
-                chai.request(server)
-                    .get('/api/orders/myorders')
-                    .set('Authorization', `Bearer ${"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYxYmRmZjVlYWRjZDNhNDU2ODgyZWY4OCIsImlhdCI6MTYzOTg0MjM3NSwiZXhwIjoxNjQyNDM0Mzc1fQ.ZuNbOTSdMUjg2A2NHMbHPtYjYgjO4rN4V8KJieGzSxU"}`)
-                    .send(givenRequest)
-                    .end((err, res) => {                        
-                        res.should.have.status(200)                            
-                        stub1.restore()
-                        stub.restore()
-                        done()
-                    })
-            })        
-    })  
-})
+    })
+})*/ 
