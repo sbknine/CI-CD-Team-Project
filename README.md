@@ -1,3 +1,4 @@
+I learned about CI/CD, Docker, and AWS in this project by taking an existing project on GitHub to unit test, writing a CICD pipeline, building to docker, and deploying on AWS.
 
 # ProShop eCommerce Platform
 
